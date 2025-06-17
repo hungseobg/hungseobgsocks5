@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Auto-install SOCKS5 proxy (Dante) on Ubuntu 25.04 with fixed port 1080
-# 100% automatic: install, configure, firewall setup, service start, then display connection URL with branding
+# 100% automatic: install, configure, firewall, service start, then display connection URL with branding
 
 set -e
 
@@ -35,22 +35,39 @@ ufw --force enable
 useradd -M -N -s /usr/sbin/nologin "$USERNAME" || true
 echo "${USERNAME}:${PASSWORD}" | chpasswd
 
-# 7. Backup old config and write danted.conf
+# 7. Backup old config and write /etc/danted.conf
 if [[ -f /etc/danted.conf ]]; then
   cp /etc/danted.conf /etc/danted.conf.bak.$(date +%Y%m%d%H%M%S)
 fi
+
 cat > /etc/danted.conf <<EOF
-logoutput: syslog /var/log/danted.log
-internal: 0.0.0.0 port = ${PORT}
-external: $(ip route | awk '/default/ {print $5; exit}')
-method: pam
-user.privileged: root
-user.notprivileged: nobody
+# Dante SOCKS5 server configuration
+
+# Logging to syslog
+logoutput: syslog;
+
+# Network interfaces
+internal: 0.0.0.0 port = ${PORT};
+external: $(ip route | awk '/default/ {print $5; exit}');
+
+# Authentication method (username = system user)
+socksmethod: username;
+
+# Privileged and unprivileged users
+user.privileged: root;
+user.notprivileged: nobody;
+
+# Allow all clients to connect
 client pass {
-    from: 0.0.0.0/0 to: 0.0.0.0/0 log: error
+    from: 0.0.0.0/0 to: 0.0.0.0/0;
+    log: error;
 }
+
+# Allow SOCKS commands
 socks pass {
-    from: 0.0.0.0/0 to: 0.0.0.0/0 command: bind connect udpassociate log: error
+    from: 0.0.0.0/0 to: 0.0.0.0/0;
+    command: bind connect udpassociate;
+    log: error;
 }
 EOF
 
@@ -61,8 +78,7 @@ systemctl enable danted
 # 9. Display connection information
 echo "========================================"
 echo "SOCKS5 proxy đã sẵn sàng!"
-echo "URL kết nối:" 
+echo "URL kết nối:"
 echo "  socks5://${USERNAME}:${PASSWORD}@${PUBLIC_IP}:${PORT}"
-echo ""
 echo "Hùng Sẹo BG"
 echo "========================================"
