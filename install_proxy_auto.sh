@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Auto-install SOCKS5 proxy (Dante) on Ubuntu 25.04
+# Auto-install SOCKS5 proxy (Dante) on Ubuntu 25.04 with fixed port 1080
 # 100% automatic: install, configure, firewall setup, service start, then display connection URL with branding
 
 set -e
@@ -17,10 +17,10 @@ if [[ -z "$PUBLIC_IP" ]]; then
   exit 1
 fi
 
-# 3. Generate random credentials and port
+# 3. Generate random credentials and set fixed port 1080
 USERNAME="socks_$(tr -dc 'a-z0-9' </dev/urandom | head -c6)"
 PASSWORD="$(tr -dc 'A-Za-z0-9' </dev/urandom | head -c12)"
-PORT=$((RANDOM%55535+1000))
+PORT=1080
 
 # 4. Install required packages
 apt-get update -y
